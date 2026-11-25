@@ -1,3 +1,4 @@
+import type { Context } from 'hono'
 import { Hono } from 'hono'
 import { createFactory } from 'hono/factory'
 import { testClient } from 'hono/testing'
@@ -13,3 +14,8 @@ export type AppType = typeof app
 // `testClient()` returns a client whose members are `ClientRequest` from `hono/client`.
 // It must stay nameable even though this file never imports `hono/client`.
 export const client = testClient(app)
+
+// A generic helper that infers its response body from an unresolved type
+// parameter must stay nameable through `import('hono/utils/types').JSONParsed`.
+export const refused = <Reason extends string>(c: Context, reason: Reason) =>
+  c.json({ reason }, 403)

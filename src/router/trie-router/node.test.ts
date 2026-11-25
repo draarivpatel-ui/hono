@@ -894,3 +894,17 @@ describe('Pattern spanning multiple parts', () => {
     })
   })
 })
+
+describe('Regex alternation', () => {
+  const node = new Node()
+  node.insert('get', '/:lang{en|fr}', 'lang')
+  node.insert('get', '/x/:id', 'id')
+
+  it.each(['/en', '/fr'])('matches %s', (path) => {
+    expect(node.search('get', path)[0].length).toBe(1)
+  })
+
+  it.each(['/english', '/xfr'])('does not match %s', (path) => {
+    expect(node.search('get', path)[0]).toEqual([])
+  })
+})

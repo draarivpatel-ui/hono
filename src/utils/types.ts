@@ -59,7 +59,7 @@ export type JSONParsed<T, TError = bigint | ReadonlyArray<bigint>> = JSONParsedI
 /**
  * `true` when `T` is identical to a type in `TSeen`, a union of one-element tuples.
  */
-type IsSeen<T, TSeen> = TSeen extends unknown
+export type IsSeen<T, TSeen> = TSeen extends unknown
   ? (<G>() => G extends [T] ? 1 : 2) extends <G>() => G extends TSeen ? 1 : 2
     ? true
     : never
@@ -69,11 +69,11 @@ type IsSeen<T, TSeen> = TSeen extends unknown
  * A recursive type such as `JSONValue` refers to itself, so `JSONParsed` cannot expand it to the end.
  * `TSeen` holds the types on the current path. A type that is already on the path becomes `JSONValue`.
  */
-type JSONParsedInner<T, TError, TSeen> = [IsSeen<T, TSeen>] extends [never]
+export type JSONParsedInner<T, TError, TSeen> = [IsSeen<T, TSeen>] extends [never]
   ? JSONParsedStep<T, TError, TSeen | [T]>
   : JSONValue
 
-type JSONParsedStep<T, TError, TSeen> = T extends {
+export type JSONParsedStep<T, TError, TSeen> = T extends {
   toJSON(): infer J
 }
   ? (() => J) extends () => JSONPrimitive

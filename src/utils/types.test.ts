@@ -1,3 +1,7 @@
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join, relative, resolve } from 'node:path'
 import type { JSONParsed, JSONValue } from './types'
 
 describe('JSONParsed', () => {
@@ -319,4 +323,52 @@ describe('JSONParsed', () => {
     type Expected = { unsafe: string }
     expectTypeOf<Actual>().toEqualTypeOf<Expected>()
   })
+})
+
+describe('JSONParsed declaration emit', () => {
+  it('can emit declarations for a generic function returning c.json()', () => {
+    const repoRoot = resolve(dirname(import.meta.filename), '../..')
+    const source = join(repoRoot, 'src', 'utils', 'types.declaration-emit.test.ts')
+    const config = join(repoRoot, 'tsconfig.declaration-emit.json')
+    writeFileSync(
+      source,
+      `import type { Context } from '../index'
+
+export const refused = <Reason extends string>(c: Context, reason: Reason) =>
+  c.json({ reason }, 403)
+`,
+    )
+    writeFileSync(
+      config,
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          lib: ['ES2022', 'DOM'],
+          types: [],
+          strict: true,
+          skipLibCheck: true,
+          declaration: true,
+          emitDeclarationOnly: true,
+          rootDir: 'src',
+          outDir: join(repoRoot, 'dist-repro'),
+        },
+        files: ['src/utils/types.declaration-emit.test.ts'],
+      }),
+    )
+
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [join(repoRoot, 'node_modules/typescript/bin/tsc'), '-p', config],
+        { encoding: 'utf8' },
+      )
+      expect(result.status, result.stderr || result.stdout).toBe(0)
+    } finally {
+      rmSync(source, { force: true })
+      rmSync(config, { force: true })
+      rmSync(join(repoRoot, 'dist-repro'), { recursive: true, force: true })
+    }
+  }, 60000)
 })

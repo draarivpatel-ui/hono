@@ -149,6 +149,26 @@ describe('Body Limit Middleware', () => {
     })
   })
 
+  it('rebuilds the body for a request-like object outside the global Request class', async () => {
+    class RequestLike {
+      method = 'POST'
+      url = 'http://localhost/body-limit-15byte'
+      headers = new Headers()
+      signal = new AbortController().signal
+      body = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(exampleText))
+          controller.close()
+        },
+      })
+    }
+
+    const res = await app.fetch(new RequestLike() as unknown as Request)
+
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe(exampleText)
+  })
+
   describe('Transfer-Encoding and Content-Length headers', () => {
     beforeEach(() => {
       app = new Hono()

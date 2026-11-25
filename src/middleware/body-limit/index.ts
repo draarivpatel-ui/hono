@@ -100,7 +100,14 @@ export const bodyLimit = (options: BodyLimitOptions): MiddlewareHandler => {
       buffer.set(value, offset)
     }
 
-    c.req.raw = new Request(c.req.raw, { body: buffer.subarray(0, size) })
+    const headers = new Headers()
+    c.req.raw.headers.forEach((value, key) => headers.append(key, value))
+    c.req.raw = new Request(c.req.raw.url, {
+      body: buffer.subarray(0, size),
+      headers,
+      method: c.req.raw.method,
+      signal: c.req.raw.signal,
+    })
 
     return next()
   }
